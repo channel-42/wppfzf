@@ -2,31 +2,43 @@
 # written by channel-42
 # Licensed under the GPL-3
 
-# default opts
-COLOR_OPTS='bg+:0,fg:7,fg+:5,border:4,hl+:10,prompt:14,hl:10,pointer:5,info:8,spinner:5'
+#### USER SETTINGS ##################
+##########
+# COLORS 
+##########
+
+COLOR_OPTS="bg+:0,fg:7,fg+:1,border:8,hl+:2,prompt:14,hl:2,pointer:6,info:8,spinner:6"
+
+##########
+# DEFAULTS
+##########
+
 LIMIT=20
 SUBREDDIT="wallpapers"
 declare -x WPP_FZF_DL_DIR=$HOME/Pictures
 declare -x DEFAULT_PREVIEW_POSITION="up"
 declare -x DEFAULT_PREVIEW_SIZE="60%"
 
-# some vars
+#### END OF USER SETTINGS ##########
+
+# some general vars
 WPPFZF_VERSION="0.1.0"
 readonly BASH_BINARY="$(which bash)"
 readonly REDRAW_COMMAND="toggle-preview+toggle-preview"
-declare -r -x PREVIEW_ID="preview"
+declare -r -x PREVIEW_ID="wpp_fzf_preview"
 
 WPP_FZF_UP="▲"
 WPP_FZF_DOWN="▼"
-# \033[1;33m" "\033[0m
 WPP_FZF_PROMPT="❯"
 WPP_FZF_POINTER="➤"
+WPP_FZF_NO_UNICODE=""
 
 function ascii_change {
-    WPP_FZF_UP="u"
-    WPP_FZF_DOWN="d"
+    WPP_FZF_UP="+"
+    WPP_FZF_DOWN="-"
     WPP_FZF_PROMPT=">"
     WPP_FZF_POINTER=">"
+    WPP_FZF_NO_UNICODE="--no-unicode"
 }
 
 # GET WALLPAPER DATA
@@ -119,14 +131,14 @@ function download_wpp() {
 
 # print usage info
 function usage { 
-    printf "Usage: %bwppfzf [-hrlpd] %b<value>%b\n" "\033[1;32m" "\033[1;33m" "\033[0m";
+    printf "Usage: %bwppfzf [-hva] [-rlpsd] %b<value>%b\n" "\033[1;32m" "\033[1;33m" "\033[0m";
     printf "run %bwppfzf -h %bfor more information\n" "\033[1;32m" "\033[0m"
 }
 
 # print help msg
 function help {
-    printf "Usage: %bwppfzf [-hrlpd] %b<value/string>%b\n" "\033[1;32m" "\033[1;33m" "\033[0m";
-    printf "Browse through images of a subreddit.\n\n"
+    printf "Usage: %bwppfzf [-hva] [-rlpsd] %b<value/string>%b\n" "\033[1;32m" "\033[1;33m" "\033[0m";
+    printf "Browse and download images of a subreddit.\n\n"
     printf "     -h,            Show this help message\n";
     printf "     -v,            Print wppfzf's version\n"; 
     printf "     -a,            Enable ascii-only mode\n"; 
@@ -139,7 +151,8 @@ function help {
     printf "     -s,            Size of the preview window\n";
     printf "                    size in percent, e.g. '60%%'(default)\n";
     printf "     -d,            Directory to save the images to\n\n";
-    printf "Press ctrl-p to preview the image in your default image viewer.\n\n";
+    printf "Press ctrl-p to preview an image in your default image viewer.\n";
+    printf "Press ENTER to download an image to the default path.\n\n";
     printf "For more information go to:\n"
     printf "<https://github.com/channel-42/wppfzf/blob/master/README.md>\n"
 }
@@ -185,8 +198,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         fzf --delimiter="$(printf ";")" --nth=1 --with-nth=1,3 \
             --preview "draw_preview {}" --color=$COLOR_OPTS \
             --preview-window "${DEFAULT_PREVIEW_POSITION}:""${DEFAULT_PREVIEW_SIZE}" \
-            --bind "enter:execute(download_wpp {})" \
-            --bind "ctrl-p:execute(xdg-open /tmp/tmp.fzfwpp_img)"\
+            --bind "enter:execute-silent(download_wpp {})" \
+            --bind "ctrl-p:execute-silent(xdg-open /tmp/tmp.fzfwpp_img)"\
             --prompt "${WPP_FZF_PROMPT} " --pointer "${WPP_FZF_POINTER} "\
+            $WPP_FZF_NO_UNICODE \
             < <( get_wpps )
 fi
