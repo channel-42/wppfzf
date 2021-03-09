@@ -123,8 +123,11 @@ function download_wpp() {
         mkdir -p $WPP_FZF_DL_DIR
     fi
     # get image name and suffix
-    name=$(ls $WPP_FZF_DL_DIR | wc -l)
-    suffix=$(echo "$url" | rev | cut -d "." -f 1 | rev)
+    name=$(echo "$1" | cut -d ";" -f 1 | cut -c -50 | \
+        sed -e 's/\s/_/g' -e 's/\./_/g' -e 's/\//_/g' -e 's/,/_/g' \
+        -e 's/:/_/g' -e 's/-/_/g' -e 's/\[/_/g' -e 's/\]/_/g' \
+    )
+    suffix=$(echo $url | rev | cut -d "." -f 1 | rev)
     # download image to specified dir
     wget -q "$url" -O "$WPP_FZF_DL_DIR/$name.$suffix"
 }
@@ -198,7 +201,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         fzf --delimiter="$(printf ";")" --nth=1 --with-nth=1,3 \
             --preview "draw_preview {}" --color=$COLOR_OPTS \
             --preview-window "${DEFAULT_PREVIEW_POSITION}:""${DEFAULT_PREVIEW_SIZE}" \
-            --bind "enter:execute-silent(download_wpp {})" \
+            --bind "enter:execute(download_wpp {})" \
             --bind "ctrl-p:execute-silent(xdg-open /tmp/tmp.fzfwpp_img)"\
             --prompt "${WPP_FZF_PROMPT} " --pointer "${WPP_FZF_POINTER} "\
             $WPP_FZF_NO_UNICODE \
