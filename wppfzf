@@ -201,7 +201,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         fzf --delimiter="$(printf ";")" --nth=1 --with-nth=1,3 \
             --preview "draw_preview {}" --color=$COLOR_OPTS \
             --preview-window "${DEFAULT_PREVIEW_POSITION}:""${DEFAULT_PREVIEW_SIZE}" \
-            --bind "enter:execute(download_wpp {})" \
+            --bind "enter:execute-silent(download_wpp {})" \
             --bind "ctrl-p:execute-silent(xdg-open /tmp/tmp.fzfwpp_img)"\
             --prompt "${WPP_FZF_PROMPT} " --pointer "${WPP_FZF_POINTER} "\
             $WPP_FZF_NO_UNICODE \
