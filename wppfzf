@@ -1,0 +1,192 @@
+#!/bin/bash
+# written by channel-42
+# Licensed under the GPL-3
+
+# default opts
+COLOR_OPTS='bg+:0,fg:7,fg+:5,border:4,hl+:10,prompt:14,hl:10,pointer:5,info:8,spinner:5'
+LIMIT=20
+SUBREDDIT="wallpapers"
+declare -x WPP_FZF_DL_DIR=$HOME/Pictures
+declare -x DEFAULT_PREVIEW_POSITION="up"
+declare -x DEFAULT_PREVIEW_SIZE="60%"
+
+# some vars
+WPPFZF_VERSION="0.1.0"
+readonly BASH_BINARY="$(which bash)"
+readonly REDRAW_COMMAND="toggle-preview+toggle-preview"
+declare -r -x PREVIEW_ID="preview"
+
+WPP_FZF_UP="▲"
+WPP_FZF_DOWN="▼"
+# \033[1;33m" "\033[0m
+WPP_FZF_PROMPT="❯"
+WPP_FZF_POINTER="➤"
+
+function ascii_change {
+    WPP_FZF_UP="u"
+    WPP_FZF_DOWN="d"
+    WPP_FZF_PROMPT=">"
+    WPP_FZF_POINTER=">"
+}
+
+# GET WALLPAPER DATA
+# scrapes reddit and returns comma-delimited list: "title,url-to-image"
+function get_wpps {
+    # spoof user agent
+    useragt="Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/81.0"
+    # download json and scrape using python
+    curl -A $useragt -s "https://www.reddit.com/r/$SUBREDDIT/hot/.json?t=all&limit=$LIMIT" |\
+    python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)['data']['children'] 
+    extension = ('.jpg', '.png', '.jpeg', '.tif', '.tiff', '.gif', '.svg')
+    for entry in data: 
+        # filter out galleries, imgur links, etc.
+        if entry['data']['url'].lower().endswith(extension):
+            # truncate title 
+            title = (entry['data']['title'][:60] + '...') if len(entry['data']['title']) > 60 else entry['data']['title']
+            print(title, entry['data']['url'], sep=\";\", end=\";\")
+            print(\"  $WPP_FZF_UP \",entry['data']['ups'], \"  $WPP_FZF_DOWN \", entry['data']['downs'], sep=\"\", end=\"\n\")
+except Exception:
+    print(\"Error while loading json from reddit-api\")
+"
+}
+
+# calculate Position
+function calculate_position {
+    # from überzugs example page
+    # get preview image position
+    < <(</dev/tty stty size) \
+        read TERMINAL_LINES TERMINAL_COLUMNS
+
+    case "${PREVIEW_POSITION:-${DEFAULT_PREVIEW_POSITION}}" in
+        left|up|top)
+            X=1
+            Y=1
+            ;;
+        right)
+            X=$((TERMINAL_COLUMNS - COLUMNS - 2))
+            Y=1
+            ;;
+        down|bottom)
+            X=1
+            Y=$((TERMINAL_LINES - LINES - 1))
+            ;;
+    esac
+}
+
+# draw preview image
+# 1. download preview to tempfile
+# 2. display image 
+function draw_preview() {
+    url=$(echo "$1" | cut -d";" -f 2)
+    # download preview
+    function download_preview() {
+        wget -q "$1" -O /tmp/tmp.fzfwpp_img
+    }
+    # download preview restart überzug and calc position data
+    download_preview $url
+    pkill ueberzug
+    calculate_position
+    ueberzug layer --parser bash 0< <(
+    # main überzug drawing command
+    declare -Ap cmd=(
+        [action]=add [identifier]="${PREVIEW_ID}" \
+        [x]="${X}" [y]="${Y}" \
+        [width]="${COLUMNS}" [height]="${LINES}" \
+        [scaler]=fit_contain [scaling_position_x]=0.5 [scaling_position_y]=0.5 \
+        [path]="/tmp/tmp.fzfwpp_img")
+        # force überzug to stay open
+        sleep 1h
+    )
+}
+
+# download wallpaper from passed list line
+# "Name, url" -> wget url
+function download_wpp() {
+    url=$(echo "$1" | cut -d";" -f 2)
+    # check if specified dir exists and create if not
+    if [ ! -d $WPP_FZF_DL_DIR ]; then
+        mkdir -p $WPP_FZF_DL_DIR
+    fi
+    # get image name and suffix
+    name=$(ls $WPP_FZF_DL_DIR | wc -l)
+    suffix=$(echo "$url" | rev | cut -d "." -f 1 | rev)
+    # download image to specified dir
+    wget -q "$url" -O "$WPP_FZF_DL_DIR/$name.$suffix"
+}
+
+# print usage info
+function usage { 
+    printf "Usage: %bwppfzf [-hrlpd] %b<value>%b\n" "\033[1;32m" "\033[1;33m" "\033[0m";
+    printf "run %bwppfzf -h %bfor more information\n" "\033[1;32m" "\033[0m"
+}
+
+# print help msg
+function help {
+    printf "Usage: %bwppfzf [-hrlpd] %b<value/string>%b\n" "\033[1;32m" "\033[1;33m" "\033[0m";
+    printf "Browse through images of a subreddit.\n\n"
+    printf "     -h,            Show this help message\n";
+    printf "     -v,            Print wppfzf's version\n"; 
+    printf "     -a,            Enable ascii-only mode\n"; 
+    printf "     -r,            Subreddit to scrape\n";
+    printf "                    e.g. 'wallpapers' (default)\n";
+    printf "     -l,            Limit of posts to scrape/show\n";
+    printf "                    default ist 20\n";
+    printf "     -p,            Location of the preview image\n";
+    printf "                    up (default), left, right or down\n";
+    printf "     -s,            Size of the preview window\n";
+    printf "                    size in percent, e.g. '60%%'(default)\n";
+    printf "     -d,            Directory to save the images to\n\n";
+    printf "Press ctrl-p to preview the image in your default image viewer.\n\n";
+    printf "For more information go to:\n"
+    printf "<https://github.com/channel-42/wppfzf/blob/master/README.md>\n"
+}
+
+# print version info
+function version {
+    printf "wppfzf version $WPPFZF_VERSION\n"
+}
+
+# parse cli options
+function parse_opts() {
+    while getopts ":hvar:l:d:p:s:" opt; do
+        case "${opt}" in
+            h ) help && exit 0;;
+            v ) version && exit 0;;
+            r ) SUBREDDIT="$OPTARG";;
+            l ) LIMIT=$OPTARG;;
+            p ) declare -x -g DEFAULT_PREVIEW_POSITION=$OPTARG;;
+            s ) declare -x -g DEFAULT_PREVIEW_SIZE=$OPTARG;;
+            d ) declare -x -g WPP_FZF_DL_DIR=$OPTARG;;
+            a ) ascii_change;;
+            * ) usage && exit 1;;
+        esac
+    done
+    shift $((OPTIND-1))
+}
+
+# cleanup on exit
+function cleanup {
+    pkill ueberzug
+    printf "\n"
+}
+
+# main workflow
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    trap cleanup KILL ERR TERM
+    # export functions to local shell
+    export -f draw_preview calculate_position download_wpp
+    # parse user arguments
+    parse_opts $@
+    # start fzf
+    SHELL="${BASH_BINARY}" \
+        fzf --delimiter="$(printf ";")" --nth=1 --with-nth=1,3 \
+            --preview "draw_preview {}" --color=$COLOR_OPTS \
+            --preview-window "${DEFAULT_PREVIEW_POSITION}:""${DEFAULT_PREVIEW_SIZE}" \
+            --bind "enter:execute(download_wpp {})" \
+            --bind "ctrl-p:execute(xdg-open /tmp/tmp.fzfwpp_img)"\
+            --prompt "${WPP_FZF_PROMPT} " --pointer "${WPP_FZF_POINTER} "\
+            < <( get_wpps )
+fi
