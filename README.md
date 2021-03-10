@@ -24,9 +24,11 @@ Install the necessary dependencies first. Get the **latest release** by running:
 ```bash
 cd ~
 wget "https://github.com/channel-42/wppfzf/archive/v0.1.0.tar.gz" \
--O $HOME/wppfzf_d.tar.gz
-tar -zxvf wppfzf_d.tar.gz && cd wppfzf_d && make install
-chmod +x $HOME/.local/bin/wppfzf
+-O $HOME/wppfzf.tar.gz
+mkdir .wppfzf_d
+tar -zxvf wppfzf.tar.gz -C .wppfzf_d --strip-components 1
+rm -f wppfzf.tar.gz
+cd .wppfzf_d && make install
 ```
 Or, to get the bleeding edge version (i.e. `HEAD`) run:
 ```bash

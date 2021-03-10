@@ -123,8 +123,11 @@ function download_wpp() {
         mkdir -p $WPP_FZF_DL_DIR
     fi
     # get image name and suffix
-    name=$(ls $WPP_FZF_DL_DIR | wc -l)
-    suffix=$(echo "$url" | rev | cut -d "." -f 1 | rev)
+    name=$(echo "$1" | cut -d ";" -f 1 | cut -c -50 | \
+        sed -e 's/\s/_/g' -e 's/\./_/g' -e 's/\//_/g' -e 's/,/_/g' \
+        -e 's/:/_/g' -e 's/-/_/g' -e 's/\[/_/g' -e 's/\]/_/g' \
+    )
+    suffix=$(echo $url | rev | cut -d "." -f 1 | rev)
     # download image to specified dir
     wget -q "$url" -O "$WPP_FZF_DL_DIR/$name.$suffix"
 }
