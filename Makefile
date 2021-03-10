@@ -1,16 +1,18 @@
+
 .POSIX:
 
 OS = $(shell uname -s)
 ifndef PREFIX
-  PREFIX = $(HOME)/.local
+  PREFIX = /usr/local
 endif
+BINPREFIX ?= $(PREFIX)/bin
 
 install:
-	mkdir -p $(PREFIX)/bin
-	cp -f wppfzf $(PREFIX)/bin/; \
-	chmod 755 $(PREFIX)/bin/wppfzf; \
+	mkdir -p $(DESTDIR)$(BINPREFIX)
+	cp -f wppfzf $(DESTDIR)$(BINPREFIX)
+	chmod +x $(DESTDIR)$(BINPREFIX)/wppfzf
 
 uninstall:
-	rm -f $(PREFIX)/bin/wppfzf; \
+	rm -f $(DESTDIR)$(BINPREFIX)/wppfzf
 
 .PHONY: install uninstall
