@@ -1,9 +1,8 @@
-
 .POSIX:
 
 OS = $(shell uname -s)
 ifndef PREFIX
-  PREFIX = /usr/local
+  PREFIX = /usr
 endif
 BINPREFIX ?= $(PREFIX)/bin
 
