@@ -10,7 +10,7 @@ pkgbase = wppfzf
 	depends = ueberzug
 	depends = bash
 	source = https://github.com/channel-42/wppfzf/archive/v0.1.0.tar.gz
-	md5sums = 7b05628a3e8add62af9f80133f3b1402
+	md5sums = ef6561e2c7ec658108ccbf6f406ae96a
 
 pkgname = wppfzf
 
