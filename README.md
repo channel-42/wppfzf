@@ -1,5 +1,5 @@
 # wppfzf ![](https://img.shields.io/badge/version-0.1.0-green.svg) [![](https://img.shields.io/badge/license-GPLv3-orange.svg)](https://github.com/channel-42/wppfzf/blob/master/LICENSE) 
-<p align="center"><i>Browse and donwload images from reddit with fzf and ueberzug</i></p>
+<p align="center"><i>Browse and download images from reddit with fzf and ueberzug</i></p>
 <p align="center"><img src="https://github.com/channel-42/wppfzf/blob/master/resources/demo.gif" align="center" alt="demo gif"title="fancy demo"></p>
 
 # Content
@@ -11,6 +11,14 @@
 
 
 # Installation
+
+### Arch
+
+To install the AUR package, use your AUR-helper of choice. For example:
+```bash
+paru -S wppfzf
+```
+
 ### General
 **Dependencies**
 - bash
@@ -29,7 +37,7 @@ cd $HOME/.wppfzf_d && sudo make install
 ```
 > You can specify the installation directory by using `sudo make DESTDIR=/your/dir PREFIX="" install`
 
-Alternatively, to get the bleeding edge version (i.e. `HEAD`) run:
+Alternatively, to get the **bleeding edge** version (i.e. `HEAD`) run:
 
 ```bash
 sudo wget "https://raw.githubusercontent.com/channel-42/wppfzf/master/wppfzf" \
@@ -37,18 +45,11 @@ sudo wget "https://raw.githubusercontent.com/channel-42/wppfzf/master/wppfzf" \
 sudo chmod +x /usr/bin/wppfzf
 ```
 
-### Arch
-
-To install the AUR package use your AUR-helper of choice, e.g.:
-```bash
-paru -S wppfzf
-```
-
 # Usage
 
-> All cli options are shown and explained when running `wppfzf -h` 
+### All cli options are shown and explained when running `wppfzf -h` 
 
-To start a simple query, run `wppfzf` with no arguments. This will use the defaults. Each line shows the posts tile as well the number of up- and downvotes. 
+To start a simple query, run `wppfzf` with no arguments. This will use the defaults. Each line shows the posts title as well as the number of up- and downvotes. 
 
 - To open the currently selected image in your default image-viewer, press `ctrl-p`.
 - To download the currently selected image, press `ENTER`. 
